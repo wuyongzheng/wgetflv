@@ -95,7 +95,7 @@ else
 	outfile="$title.$ext"
 fi
 
-if ! wget -q -O "$outfile" "$url3" ; then
+if ! wget --progress=dot:mega -O "$outfile" "$url3" ; then
 	echo wget "$url3" failed
 	exit
 fi

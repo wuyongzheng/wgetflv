@@ -10,6 +10,10 @@ if ! wget -q -O /tmp/getsohu1.html "$1" ; then
 	echo wget $1 failed
 	exit
 fi
+if file /tmp/getsohu1.html | grep -q gzip ; then
+	gunzip -c /tmp/getsohu1.html > /tmp/getsohu1.x
+	mv /tmp/getsohu1.x /tmp/getsohu1.html
+fi
 if grep -q -i '<meta .*charset *= *"*gb' /tmp/getsohu1.html ; then
 	iconv -c -f gbk -t utf-8 /tmp/getsohu1.html | dos2unix > /tmp/getsohu1.x
 	mv /tmp/getsohu1.x /tmp/getsohu1.html
@@ -21,6 +25,7 @@ if grep -q 'var vid="[0-9]*";$' /tmp/getsohu1.html ; then
 	vid=`grep -m 1 'var vid="[0-9]*";$' /tmp/getsohu1.html | sed -e 's/.*="//g' -e 's/";.*//g'`
 else
 	echo unexpected content of $1. check /tmp/getsohu1.html
+	exit
 fi
 
 rm -f /tmp/getsohu2.txt
@@ -49,15 +54,11 @@ fi
 rm -f $2.mp4
 for i in $mp4list ; do
 	rm -f $2-curr.mp4
-	if ! wget -q -U 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.10) Gecko/20100914 Firefox/3.6.10' -O $2-curr.mp4 "$i" ; then
+	if ! wget --progress=dot:mega -U 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.10) Gecko/20100914 Firefox/3.6.10' -O $2-curr.mp4 "$i" ; then
 		echo wget $i failed
 		exit
 	fi
 
-	if [ -f $2.mp4 ] ; then
-		MP4Box -cat $2-curr.mp4 $2.mp4
-		rm $2-curr.mp4
-	else
-		mv $2-curr.mp4 $2.mp4
-	fi
+	MP4Box -cat $2-curr.mp4 $2.mp4
+	rm $2-curr.mp4
 done

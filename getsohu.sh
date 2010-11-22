@@ -54,7 +54,7 @@ fi
 rm -f $2.mp4
 for i in $mp4list ; do
 	rm -f $2-curr.mp4
-	if ! wget --progress=dot:mega -U 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.10) Gecko/20100914 Firefox/3.6.10' -O $2-curr.mp4 "$i" ; then
+	if ! wget --retry-connrefused -t 0 --progress=dot:mega -U 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.10) Gecko/20100914 Firefox/3.6.10' -O $2-curr.mp4 "$i" ; then
 		echo wget $i failed
 		exit
 	fi

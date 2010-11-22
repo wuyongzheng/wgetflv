@@ -95,7 +95,7 @@ else
 	outfile="$title.$ext"
 fi
 
-if ! wget --progress=dot:mega -O "$outfile" "$url3" ; then
+if ! wget --retry-connrefused -t 0 --progress=dot:mega -O "$outfile" "$url3" ; then
 	echo wget "$url3" failed
 	exit
 fi

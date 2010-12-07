@@ -5,6 +5,9 @@ if [ $# -ne 2 ] ; then
 	echo Usage $0 http://news.cntv.cn/program/xwlb/20100726/103905.shtml xwlb-0726
 	echo Usage $0 http://bugu.cntv.cn/news/china/xinwenlianbo/classpage/video/20100726/100921.shtml xwlb-0726
 	echo Output is saved in xwlb-0726.mp4
+	echo Usage $0 url _prefetch_
+	echo Try to download the dirst byte and throw away.
+	echo Since CNTV uses akamai cache. This one prefetches the file.
 	exit 1
 fi
 
@@ -40,10 +43,17 @@ if [ `wc -c < /tmp/cntv3.txt` -lt 10 ] || grep -q ' ' /tmp/cntv3.txt ; then
 	exit 1
 fi
 
+if [ "_prefetch_" = "$2" ] ; then
+	for i in `cat /tmp/cntv3.txt` ; do
+		wget -O - -q "$i" | head -c 1 >/dev/null 2>&1
+	done
+	exit 0
+fi
+
 rm -f $2.mp4
 for i in `cat /tmp/cntv3.txt` ; do
 	rm -f $2-curr.mp4
-	if ! wget --retry-connrefused --progress=dot:mega -t 0 -O $2-curr.mp4 "$i" ; then
+	if ! wget --progress=dot:mega -O $2-curr.mp4 "$i" ; then
 		echo wget $i failed
 		exit 1
 	fi

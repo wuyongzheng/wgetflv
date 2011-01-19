@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# env var used:
+# getcntv_rate: same as wget's --limit-rate. e.g. 100k
+# getcntv_sid: state id used for the state file. e.g. abc -> /tmp/cntv-abc-1.txt
+
 if [ $# -ne 2 ] ; then
 	echo Usage $0 url filename_noext
 	echo Ex    $0 http://news.cntv.cn/program/xwlb/20100726/103905.shtml xwlb-0726
@@ -13,41 +17,45 @@ if [ $# -ne 2 ] ; then
 	exit 1
 fi
 
-rm -f /tmp/cntv1.txt
-if ! wget -q -O /tmp/cntv1.txt "$1" ; then
+tmppre=/tmp/cntv${getcntv_sid:+-$getcntv_sid}
+
+rm -f $tmppre-1.txt
+if ! wget -q -O $tmppre-1.txt "$1" ; then
 	echo wget $1 failed
 	exit 1
 fi
 
-dos2unix </tmp/cntv1.txt | iconv -c -f gbk -t utf8 >/tmp/cntvx.txt
-mv /tmp/cntvx.txt /tmp/cntv1.txt
+dos2unix <$tmppre-1.txt | iconv -c -f gbk -t utf8 >$tmppre-x.txt
+mv $tmppre-x.txt $tmppre-1.txt
 
-if ! grep -q 'fo.addVariable("videoCenterId","................................");' /tmp/cntv1.txt ; then
-	echo $1 invalid. check /tmp/cntv1.txt
+if ! grep -q 'fo.addVariable("videoCenterId","................................");' $tmppre-1.txt ; then
+	echo $1 invalid. check $tmppre-1.txt
 	exit 1
 fi
 #TODO: for xiyou, it's like fo.addVariable("id", "7d5f2c8e-f2bc-11df-9117-001e0bbb2442");
 #      the next fetch would be http://vi.xiyou.cntv.cn/api/get-flash-videoinfo.php?videoId=7d5f2c8e-f2bc-11df-9117-001e0bbb2442
 
-vcid=`grep 'fo.addVariable("videoCenterId","................................");' /tmp/cntv1.txt | head -n 1 | sed -e 's/.*videoCenterId","//g' -e 's/".*//g'`
+vcid=`grep 'fo.addVariable("videoCenterId","................................");' $tmppre-1.txt | head -n 1 | sed -e 's/.*videoCenterId","//g' -e 's/".*//g'`
 
-rm -f /tmp/cntv2.txt
-if ! wget -q -O /tmp/cntv2.txt "http://vdd.player.cntv.cn/index.php?pid=$vcid" ; then
+rm -f $tmppre-2.txt
+if ! wget -q -O $tmppre-2.txt "http://vdd.player.cntv.cn/index.php?pid=$vcid" ; then
 	echo wget "http://vdd.player.cntv.cn/index.php?pid=$vcid" failed
 	exit 1
 fi
 
-#cat /tmp/cntv2.txt | tr '"' '\n' | grep '^http:.*\.mp4$' | tr -d '\\' | sort -u -V > /tmp/cntv3.txt
-binreplace -r '"chapters' '\n"chapters' -r '],' '],\n' /tmp/cntv2.txt | grep chapters | tail -n 1 | tr '"' '\n' | grep '^http:.*\.mp4$' | tr -d '\\' > /tmp/cntv3.txt
+#cat $tmppre-2.txt | tr '"' '\n' | grep '^http:.*\.mp4$' | tr -d '\\' | sort -u -V > $tmppre-3.txt
+binreplace -r '"chapters' '\n"chapters' -r '],' '],\n' $tmppre-2.txt | grep chapters | tail -n 1 | tr '"' '\n' | grep '^http:.*\.mp4$' | tr -d '\\' > $tmppre-3.txt
 
-if [ `wc -c < /tmp/cntv3.txt` -lt 10 ] || grep -q ' ' /tmp/cntv3.txt ; then
-	echo "http://vdd.player.cntv.cn/index.php?pid=$vcid" invalid. check /tmp/cntv2.txt
+if [ `wc -c < $tmppre-3.txt` -lt 10 ] || grep -q ' ' $tmppre-3.txt ; then
+	echo "http://vdd.player.cntv.cn/index.php?pid=$vcid" invalid. check $tmppre-2.txt
 	exit 1
 fi
 
 if [ "_prefetch_" = "$2" ] ; then
-	for i in `cat /tmp/cntv3.txt` ; do
-		wget -O - -q "$i" | head -c 1 >/dev/null 2>&1
+	for i in `cat $tmppre-3.txt` ; do
+		#wget -O - -q "$i" | head -c 1 >/dev/null 2>&1
+		curl -L --retry 20 -r 0-99 "$i" 2>/dev/null | head -c 100 >/dev/null
+		curl -L --retry 20 -r -100 "$i" 2>/dev/null | head -c 100 >/dev/null
 	done
 	exit 0
 fi
@@ -65,8 +73,8 @@ fi
 
 j=1
 rm -f $base-??.mp4
-for i in `cat /tmp/cntv3.txt` ; do
-	if ! wget --progress=dot:mega -O $base-`printf %02d $j`.mp4 "$i" ; then
+for i in `cat $tmppre-3.txt` ; do
+	if ! wget --progress=dot:mega ${getcntv_rate:+--limit-rate=$getcntv_rate} -O $base-`printf %02d $j`.mp4 "$i" ; then
 		echo wget $i failed
 		exit 1
 	fi

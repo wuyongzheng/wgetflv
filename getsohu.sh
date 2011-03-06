@@ -2,6 +2,8 @@
 
 if [ $# -ne 2 ] ; then
 	echo getsohu.sh http://tv.sohu.com/20100502/n271886821.shtml sanguo-01
+	echo getsohu.sh http://tv.sohu.com/20100502/n271886821.shtml sanguo-01.mp4
+	echo getsohu.sh http://tv.sohu.com/20100502/n271886821.shtml sanguo-01.mkv
 	exit
 fi
 
@@ -51,14 +53,48 @@ if [ "x$mp4list" = x ] ; then
 	exit
 fi
 
-rm -f $2.mp4
+if [ $2 != `basename $2 .mp4` ] ; then
+	base=`basename $2 .mp4`
+	ext=mp4
+elif [ $2 != `basename $2 .mkv` ] ; then
+	base=`basename $2 .mkv`
+	ext=mkv
+else
+	base=$2
+	ext=mp4
+fi
+
+rm -f $base-??.mp4 $base.$ext
+
+j=1
 for i in $mp4list ; do
-	rm -f $2-curr.mp4
-	if ! wget --retry-connrefused -t 0 --progress=dot:mega -U 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.10) Gecko/20100914 Firefox/3.6.10' -O $2-curr.mp4 "$i" ; then
+	if ! wget --retry-connrefused -t 0 --progress=dot:mega -U 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.10) Gecko/20100914 Firefox/3.6.10' -O $base-`printf %02d $j`.mp4 "$i" ; then
 		echo wget $i failed
-		exit
+		exit 1
+	fi
+	j=`expr $j + 1`
+done
+
+for i in $base-??.mp4 ; do
+	if [ "x$strmp4" = x ] ; then
+		strmp4="MP4Box -new $base.$ext -add $i"
+	else
+		strmp4="$strmp4 -cat $i"
 	fi
 
-	MP4Box -cat $2-curr.mp4 $2.mp4
-	rm $2-curr.mp4
+	if [ "x$strmkv" = x ] ; then
+		strmkv="mkvmerge -o $base.$ext --append-mode file $i"
+	else
+		strmkv="$strmkv + $i"
+	fi
 done
+
+if [ $ext = mp4 ] ; then
+	echo $strmp4
+	$strmp4
+else
+	echo $strmkv
+	$strmkv
+fi
+
+rm -f $base-??.mp4

@@ -7,31 +7,37 @@ if [ $# -ne 2 ] ; then
 	exit
 fi
 
-rm -f /tmp/getsohu1.html
-if ! wget -q -O /tmp/getsohu1.html "$1" ; then
+if [ "x$getsohusid" = x ] ; then
+	tmpre=/tmp/getsohu
+else
+	tmpre=/tmp/getsohu-$getsohusid
+fi
+
+rm -f $tmpre.1.html
+if ! wget -q -O $tmpre.1.html "$1" ; then
 	echo wget $1 failed
 	exit
 fi
-if file /tmp/getsohu1.html | grep -q gzip ; then
-	gunzip -c /tmp/getsohu1.html > /tmp/getsohu1.x
-	mv /tmp/getsohu1.x /tmp/getsohu1.html
+if file $tmpre.1.html | grep -q gzip ; then
+	gunzip -c $tmpre.1.html > $tmpre.1.x
+	mv $tmpre.1.x $tmpre.1.html
 fi
-if grep -q -i '<meta .*charset *= *"*gb' /tmp/getsohu1.html ; then
-	iconv -c -f gbk -t utf-8 /tmp/getsohu1.html | dos2unix > /tmp/getsohu1.x
-	mv /tmp/getsohu1.x /tmp/getsohu1.html
+if grep -q -i '<meta .*charset *= *"*gb' $tmpre.1.html ; then
+	iconv -c -f gbk -t utf-8 $tmpre.1.html | dos2unix > $tmpre.1.x
+	mv $tmpre.1.x $tmpre.1.html
 else
-	dos2unix -q /tmp/getsohu1.html
+	dos2unix -q $tmpre.1.html
 fi
 
-if grep -q 'var vid="[0-9]*";$' /tmp/getsohu1.html ; then
-	vid=`grep -m 1 'var vid="[0-9]*";$' /tmp/getsohu1.html | sed -e 's/.*="//g' -e 's/";.*//g'`
+if grep -q 'var vid="[0-9]*";$' $tmpre.1.html ; then
+	vid=`grep -m 1 'var vid="[0-9]*";$' $tmpre.1.html | sed -e 's/.*="//g' -e 's/";.*//g'`
 else
-	echo unexpected content of $1. check /tmp/getsohu1.html
+	echo unexpected content of $1. check $tmpre.1.html
 	exit
 fi
 
-rm -f /tmp/getsohu2.txt
-if ! wget -q -O /tmp/getsohu2.txt "http://hot.vrs.sohu.com/vrs_flash.action?vid=$vid" ; then
+rm -f $tmpre.2.txt
+if ! wget -q -O $tmpre.2.txt "http://hot.vrs.sohu.com/vrs_flash.action?vid=$vid" ; then
 	echo wget "http://hot.vrs.sohu.com/vrs_flash.action?vid=$vid" failed.
 	exit
 fi
@@ -44,12 +50,12 @@ fi
 # "http://data.vod.itc.cn/tv/20090701/46c03c38-7cc7-40d6-a0bb-78c0bb93236b.mp4",
 # ...
 
-mp4list=`binreplace -r '"' '\n' /tmp/getsohu2.txt | grep '^http://.*mp4$'`
+mp4list=`binreplace -r '"' '\n' $tmpre.2.txt | grep '^http://.*mp4$'`
 # It should be a list of mp4 urls. Example:
 # http://data.vod.itc.cn/tv/20100505/d2f89e5b-e6a4-4ddf-a765-e006028926c0.mp4
 
 if [ "x$mp4list" = x ] ; then
-	echo "unexpected content of http://hot.vrs.sohu.com/vrs_flash.action?vid=$vid". check /tmp/getsohu2.txt
+	echo "unexpected content of http://hot.vrs.sohu.com/vrs_flash.action?vid=$vid". check $tmpre.2.txt
 	exit
 fi
 

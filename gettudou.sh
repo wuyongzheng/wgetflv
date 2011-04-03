@@ -26,7 +26,7 @@ else
 	dos2unix -q /tmp/downtudou1.html
 fi
 
-if grep -q 'iid = . location.href.match.*defaultIid$' /tmp/downtudou1.html ; then
+if echo "$url1" | grep -q 'iid=[0-9]' ; then #TODO no need to download url1
 	iid=`echo "$url1" | sed -e 's/.*iid=\([0-9]*\).*/\1/g'`
 elif grep -q 'var iid = ' /tmp/downtudou1.html ; then
 	iid=`grep -m 1 'var iid = ' /tmp/downtudou1.html | sed 's/.* //g'`

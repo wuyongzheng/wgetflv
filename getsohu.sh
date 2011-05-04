@@ -4,6 +4,7 @@ if [ $# -ne 2 ] ; then
 	echo getsohu.sh http://tv.sohu.com/20100502/n271886821.shtml sanguo-01
 	echo getsohu.sh http://tv.sohu.com/20100502/n271886821.shtml sanguo-01.mp4
 	echo getsohu.sh http://tv.sohu.com/20100502/n271886821.shtml sanguo-01.mkv
+	echo getsohu.sh 77379 sanguo-01
 	exit
 fi
 
@@ -31,10 +32,14 @@ else
 	tmpre=/tmp/getsohu-$getsohusid
 fi
 
-vid=`wget -q -O - "$1" | iconv -f gbk -t utf8 | dos2unix | grep -m 1 'var vid="[1-9][0-9]*";$' | sed -e 's/.*="//g' -e 's/";.*//g'`
-if [ -z "$vid" ] ; then
-	echo unexpected content of $1.
-	exit 1
+if echo "$1" | grep -q '^[1-9][0-9]*$' ; then
+	vid=$1
+else
+	vid=`wget -q -O - "$1" | iconv -f gbk -t utf8 | dos2unix | grep -m 1 'var vid="[1-9][0-9]*";$' | sed -e 's/.*="//g' -e 's/";.*//g'`
+	if [ -z "$vid" ] ; then
+		echo unexpected content of $1.
+		exit 1
+	fi
 fi
 
 rm -f $tmpre.json

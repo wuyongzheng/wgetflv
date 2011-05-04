@@ -10,34 +10,13 @@ function cctvtxt {
 		url=""
 		return
 	fi
-
 	url2=`wget -O - -q "http://cctv.cntv.cn/lm/$enname/$date.shtml" | iconv -f gbk -t utf8 | dos2unix | grep new.title_array_01 | head -n 1 | sed -e 's/..;.*//g' -e 's/.*,.//g'`
-	if ! echo $url2 | grep -q '^http.*shtml$' ; then
-		echo ERR: $enname: cctvtxt: cannot extract url
-		echo ERR: $enname: cctvtxt: cannot extract url >> get-cntvnews.log
-		url2=""
-		return
-	fi
 }
 
 function cctvimg {
 	line=`wget -q -O - $url | iconv -f gbk -t utf8 | dos2unix | binreplace -d '\n' -r '<div' '\n<div' -r '</div>' '</div>\n' | grep '<div class="[ti][em].*http:.*/......../.......shtml' | sed -e 's/.*\(http:.*\/\(........\)\/\(......\).shtml\).*/\2\t\3\t\1/g' | sort -r -u | head -n 1`
 	url2=`echo "$line" | cut -f 3`
 	date=`echo "$line" | cut -f 1`
-
-	if ! echo $url2 | grep -q '^http.*shtml$' ; then
-		echo ERR: $enname: cctvimg: cannot extract url
-		echo ERR: $enname: cctvimg: cannot extract url >> get-cntvnews.log
-		url2=""
-		return
-	fi
-
-	if ! echo $date | grep -q '^201[0-9]*$' ; then
-		echo ERR: $enname: cctvimg: cannot extract date
-		echo ERR: $enname: cctvimg: cannot extract date >> get-cntvnews.log
-		url2=""
-		return
-	fi
 }
 
 function bugu {
@@ -48,20 +27,8 @@ function bugu {
 
 	if echo "$date1" | grep -q '^201[0-9]*$' ; then
 		date=$date1
-	elif echo "$date2" | grep -q '^201[0-9]*$' ; then
-		date=$date2
 	else
-		echo ERR: $enname: bugu: cannot extract date
-		echo ERR: $enname: bugu: cannot extract date >> get-cntvnews.log
-		url2=""
-		return
-	fi
-
-	if ! echo $url2 | grep -q '^http.*shtml$' ; then
-		echo ERR: $enname: bugu: cannot extract url
-		echo ERR: $enname: bugu: cannot extract url >> get-cntvnews.log
-		url2=""
-		return
+		date=$date2
 	fi
 }
 
@@ -86,7 +53,14 @@ until [ -e stop ] ; do
 		# getter reads $url and $enname
 		#        sets $url2 and $date
 		$getter
-		if [ "x$url2" = x ] ; then
+		if ! echo $url2 | grep -q '^http.*shtml$' ; then
+			echo ERR: $enname: cctvtxt: cannot extract url
+			echo ERR: $enname: cctvtxt: cannot extract url >> get-cntvnews.log
+			continue
+		fi
+		if ! echo $date | grep -q '^201[0-9][0-9][0-9][0-9][0-9]$' ; then
+			echo ERR: $enname: cctvimg: cannot extract date
+			echo ERR: $enname: cctvimg: cannot extract date >> get-cntvnews.log
 			continue
 		fi
 

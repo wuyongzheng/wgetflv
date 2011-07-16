@@ -38,6 +38,8 @@ if [ ! -f list.txt ] ; then
 	exit
 fi
 
+mkdir /tmp/cctv >/dev/null 2>&1
+
 until [ -e stop ] ; do
 	ts1=`date +%s`
 
@@ -76,7 +78,12 @@ until [ -e stop ] ; do
 		cd /tmp/cctv
 		env getcntv_sid=prefe1 bash $getcntv $url2 _prefetch_ >/dev/null 2>&1 &
 		sleep 10
-		if ! env getcntv_rate=50k getcntv_sid=video bash $getcntv $url2 $chname-$date.mkv ; then
+		if [ `date +%k` -ge 1 -a `date +%k` -le 6 ] ; then
+			rate=500k
+		else
+			rate=30k
+		fi
+		if ! env getcntv_rate=$rate getcntv_sid=video bash $getcntv $url2 $chname-$date.mkv ; then
 			rm -f $chname-$date*
 			env getcntv_sid=prefe2 bash $getcntv $url2 _prefetch_ >/dev/null 2>&1 &
 		fi
@@ -84,7 +91,7 @@ until [ -e stop ] ; do
 		if [ -f /tmp/cctv/$chname-$date.mkv ] ; then
 			rm -f $chname-????????.mkv
 			mv /tmp/cctv/$chname-$date.mkv ./
-	
+
 			echo `date '+%Y-%m-%d %H:%M:%S'` $chname-$date > /tmp/cctvlog.txt
 			cat 下载记录.txt >> /tmp/cctvlog.txt
 			mv /tmp/cctvlog.txt 下载记录.txt

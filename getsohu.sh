@@ -71,14 +71,15 @@ for (( i=10 ; ; i++ )) ; do
 
 	bars=`wget -O - -q "http://$allot/?prot=$prot&file=$file&new=$new"`
 	if ! echo "$bars" | grep -q '^http://' ; then
-		echo unknown bars: $bars
+		echo unknown bars: $bars. "http://$allot/?prot=$prot&file=$file&new=$new"
 		exit 1
 	fi
 
 	mp4url1=`echo $bars | cut -d \| -f 1`
 	mp4url2=`echo $bars | cut -d \| -f 4`
 	mp4url="$mp4url1/$new?key=$mp4url2"
-	if ! wget -O "$base-$i.mp4" -U 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.16) Gecko/20110319 Firefox/3.6.16' "$mp4url" ; then
+	mp4url=`echo $mp4url | sed -e sx///x/xg`
+	if ! wget -c -O "$base-$i.mp4" -U 'Mozilla/5.0 (Windows; U; Windows NT 6.1; en-US; rv:1.9.2.16) Gecko/20110319 Firefox/3.6.16' "$mp4url" ; then
 		echo wget "$base-$i.mp4" failed
 		exit 1
 	fi

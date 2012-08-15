@@ -19,6 +19,12 @@ if ! wget -q -O /tmp/downtudou1.html "$url1" ; then
 	exit
 fi
 
+if gunzip -c /tmp/downtudou1.html > /tmp/downtudou1.tmp.html ; then
+	mv /tmp/downtudou1.tmp.html /tmp/downtudou1.html
+else
+	rm /tmp/downtudou1.tmp.html
+fi
+
 if grep -q -i '<meta .*charset *= *"*gb' /tmp/downtudou1.html ; then
 	dos2unix </tmp/downtudou1.html | iconv -c -f gbk -t utf-8 >/tmp/downtudoux
 	mv /tmp/downtudoux /tmp/downtudou1.html
@@ -51,7 +57,7 @@ fi
 #url2="http://v2.tudou.com/v2/cdn?id=$iid&noCatch=123&safekey=IAlsoNeverKnow"
 url2="http://v2.tudou.com/v?it=$iid"
 
-rm -f /tmp/downtudou2.html
+rm -f /tmp/downtudou2.xml
 if ! wget -q -O /tmp/downtudou2.xml "$url2" ; then
 	echo wget "$url2" failed
 	exit

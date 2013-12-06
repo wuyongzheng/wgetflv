@@ -38,6 +38,9 @@ elif grep -q 'var iid = ' /tmp/downtudou1.html ; then
 	iid=`grep -m 1 'var iid = ' /tmp/downtudou1.html | sed 's/.* //g'`
 elif grep -q 'iid: "[1-9][0-9]*",$' /tmp/downtudou1.html ; then
 	iid=`grep -m 1 'iid: "[1-9][0-9]*",$' /tmp/downtudou1.html | sed -e 's/",//g' -e 's/.*"//g'`
+elif grep -q '^iid: *[1-9][0-9]' /tmp/downtudou1.html ; then
+	iid=`grep -m 1 '^iid: *[1-9][0-9]' /tmp/downtudou1.html | sed -e 's/^iid: *//g' -e 's/[^0-9].*//g'`
+	echo iid=$iid
 else
 	echo unexpected content of "$url1"
 	exit

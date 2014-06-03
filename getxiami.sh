@@ -29,4 +29,7 @@ fi
 
 rm -f $song_id.mp3
 wget -O $song_id.mp3 $url
-mid3v2 "--artist=$artist" "--album=$album_name" "--song=$title" $song_id.mp3
+if [ -f $song_id.mp3 -a ! -s $song_id.mp3 ] ; then rm $song_id.mp3 ; fi
+if [ -f $song_id.mp3 ] ; then
+	mid3v2 "--artist=$artist" "--album=$album_name" "--song=$title" $song_id.mp3
+fi
